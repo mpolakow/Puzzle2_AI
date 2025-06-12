@@ -10,8 +10,6 @@ const modalMessage = document.getElementById('modal-message');
 const modalNextButton = document.getElementById('modal-next-button');
 const modalCloseButton = document.getElementById('modal-close-button');
 
-const PIECES = { ...window.HEROES, ...window.MONSTERS };
-
 const PUZZLES = [
     {
         name: "Knight's Charge",
@@ -466,6 +464,7 @@ modalNextButton.addEventListener('click', () => {
 // --- Initial Load ---
 
 function init() {
+    const PIECES = { ...window.HEROES, ...window.MONSTERS };
     createBoard();
     populatePuzzleSelect();
     setupPuzzle(0);
