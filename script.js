@@ -1,3 +1,16 @@
+const Attack_Type = {
+    MELEE: 'melee',
+    RANGED: 'ranged',
+    MAGIC: 'magic'
+};
+
+const Armor_Type = {
+    NONE: 'none',
+    LIGHT: 'light',
+    MEDIUM: 'medium',
+    HARD: 'hard'
+};
+
 const boardContainer = document.getElementById('board-container');
 const movesLeftEl = document.getElementById('moves-left');
 const puzzleTitleEl = document.getElementById('puzzle-title');
@@ -17,13 +30,31 @@ const PIECE_TYPES = {
 
 const PIECES = {
     // Heroes
-    'knight': { icon: '♘', type: PIECE_TYPES.HERO, moves: getKnightMoves },
-    'archer': { icon: '♗', type: PIECE_TYPES.HERO, moves: getBishopMoves, range: 3 },
-    'warrior': { icon: '♔', type: PIECE_TYPES.HERO, moves: getKingMoves },
+    'knight': {
+        icon: '♘', type: PIECE_TYPES.HERO, moves: getKnightMoves,
+        Health: 100, Mana: 0, Attack: 20, Attack_Type: Attack_Type.MELEE, Attack_Range: 1, Defense: 10, Armor_Type: Armor_Type.MEDIUM
+    },
+    'archer': {
+        icon: '♗', type: PIECE_TYPES.HERO, moves: getBishopMoves, range: 3,
+        Health: 70, Mana: 20, Attack: 15, Attack_Type: Attack_Type.RANGED, Attack_Range: 3, Defense: 5, Armor_Type: Armor_Type.LIGHT
+    },
+    'warrior': {
+        icon: '♔', type: PIECE_TYPES.HERO, moves: getKingMoves,
+        Health: 120, Mana: 0, Attack: 25, Attack_Type: Attack_Type.MELEE, Attack_Range: 1, Defense: 15, Armor_Type: Armor_Type.HARD
+    },
     // Monsters
-    'goblin': { icon: '♙', type: PIECE_TYPES.MONSTER, moves: getPawnMoves },
-    'orc': { icon: '♖', type: PIECE_TYPES.MONSTER, moves: getRookMoves, range: 4 },
-    'ogre': { icon: '♚', type: PIECE_TYPES.MONSTER, moves: getKingMoves },
+    'goblin': {
+        icon: '♙', type: PIECE_TYPES.MONSTER, moves: getPawnMoves,
+        Health: 30, Mana: 0, Attack: 10, Attack_Type: Attack_Type.MELEE, Attack_Range: 1, Defense: 5, Armor_Type: Armor_Type.NONE
+    },
+    'orc': {
+        icon: '♖', type: PIECE_TYPES.MONSTER, moves: getRookMoves, range: 4,
+        Health: 80, Mana: 0, Attack: 15, Attack_Type: Attack_Type.MELEE, Attack_Range: 1, Defense: 10, Armor_Type: Armor_Type.MEDIUM
+    },
+    'ogre': {
+        icon: '♚', type: PIECE_TYPES.MONSTER, moves: getKingMoves,
+        Health: 150, Mana: 0, Attack: 30, Attack_Type: Attack_Type.MELEE, Attack_Range: 1, Defense: 20, Armor_Type: Armor_Type.HARD
+    },
 };
 
 const PUZZLES = [
