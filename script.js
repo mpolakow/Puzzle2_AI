@@ -235,8 +235,36 @@ function selectPiece(row, col) {
     const pieceDefinition = PIECES[piece.name];
 
     // Get valid moves (movement to empty squares)
-    gameState.validMoves = pieceDefinition.moves(row, col, gameState.board, pieceDefinition)
-        .filter(move => !gameState.board[move[0]][move[1]]); // Ensure target square is empty for movement
+    let moveFunction;
+    switch (pieceDefinition.moveStrategy) {
+        case 'knight':
+            moveFunction = getKnightMoves;
+            break;
+        case 'bishop': // Used by archer
+            moveFunction = getBishopMoves;
+            break;
+        case 'king': // Used by warrior and ogre
+            moveFunction = getKingMoves;
+            break;
+        case 'pawn': // Used by goblin
+            moveFunction = getPawnMoves;
+            break;
+        case 'rook': // Used by orc
+            moveFunction = getRookMoves;
+            break;
+        default:
+            console.error('Unknown moveStrategy:', pieceDefinition.moveStrategy);
+            gameState.validMoves = [];
+            break;
+    }
+
+    if (moveFunction) {
+        gameState.validMoves = moveFunction(row, col, gameState.board, pieceDefinition)
+            .filter(move => !gameState.board[move[0]][move[1]]);
+    } else {
+        // Ensure validMoves is empty if no move function was found (already handled by default in switch)
+        gameState.validMoves = [];
+    }
 
     // Get valid attack moves (targeting enemy pieces within Attack_Range)
     gameState.validAttackMoves = [];
