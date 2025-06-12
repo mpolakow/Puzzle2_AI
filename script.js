@@ -414,10 +414,7 @@ function highlightValidMoves() {
 }
 
 function updateMovesCounter() {
-   console.log('updateMovesCounter called. movesLeftEl:', movesLeftEl);
-   console.log('gameState.movesLeft:', gameState.movesLeft);
     movesLeftEl.textContent = gameState.movesLeft;
-   console.log('movesLeftEl.textContent after update:', movesLeftEl ? movesLeftEl.textContent : 'movesLeftEl is null');
 }
 
 function populatePuzzleSelect() {
@@ -453,19 +450,6 @@ function hideModal() {
 
 // --- Event Listeners & Initialization ---
 
-resetButton.addEventListener('click', () => setupPuzzle(gameState.currentPuzzleIndex));
-puzzleSelect.addEventListener('change', (e) => setupPuzzle(parseInt(e.target.value)));
-
-modalCloseButton.addEventListener('click', hideModal);
-modalNextButton.addEventListener('click', () => {
-    hideModal();
-    const nextPuzzleIndex = gameState.currentPuzzleIndex + 1;
-    if (nextPuzzleIndex < PUZZLES.length) {
-        puzzleSelect.value = nextPuzzleIndex;
-        setupPuzzle(nextPuzzleIndex);
-    }
-});
-
 // --- Initial Load ---
 
 function init() {
@@ -485,6 +469,19 @@ function init() {
     createBoard();
     populatePuzzleSelect();
     setupPuzzle(0);
+
+    resetButton.addEventListener('click', () => setupPuzzle(gameState.currentPuzzleIndex));
+    puzzleSelect.addEventListener('change', (e) => setupPuzzle(parseInt(e.target.value)));
+
+    modalCloseButton.addEventListener('click', hideModal);
+    modalNextButton.addEventListener('click', () => {
+        hideModal();
+        const nextPuzzleIndex = gameState.currentPuzzleIndex + 1;
+        if (nextPuzzleIndex < PUZZLES.length) {
+            puzzleSelect.value = nextPuzzleIndex;
+            setupPuzzle(nextPuzzleIndex);
+        }
+    });
 }
 
 init();
