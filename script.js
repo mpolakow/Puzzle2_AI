@@ -1,14 +1,16 @@
-const boardContainer = document.getElementById('board-container');
-const movesLeftEl = document.getElementById('moves-left');
-const puzzleTitleEl = document.getElementById('puzzle-title');
-const puzzleObjectiveEl = document.getElementById('puzzle-objective');
-const resetButton = document.getElementById('reset-button');
-const puzzleSelect = document.getElementById('puzzle-select');
-const modal = document.getElementById('modal');
-const modalTitle = document.getElementById('modal-title');
-const modalMessage = document.getElementById('modal-message');
-const modalNextButton = document.getElementById('modal-next-button');
-const modalCloseButton = document.getElementById('modal-close-button');
+let boardContainer;
+let movesLeftEl;
+let puzzleTitleEl;
+let puzzleObjectiveEl;
+let resetButton;
+let puzzleSelect;
+let modal;
+let modalTitle;
+let modalMessage;
+let modalNextButton;
+let modalCloseButton;
+
+let PIECES = {};
 
 const PUZZLES = [
     {
@@ -412,7 +414,10 @@ function highlightValidMoves() {
 }
 
 function updateMovesCounter() {
+   console.log('updateMovesCounter called. movesLeftEl:', movesLeftEl);
+   console.log('gameState.movesLeft:', gameState.movesLeft);
     movesLeftEl.textContent = gameState.movesLeft;
+   console.log('movesLeftEl.textContent after update:', movesLeftEl ? movesLeftEl.textContent : 'movesLeftEl is null');
 }
 
 function populatePuzzleSelect() {
@@ -464,7 +469,19 @@ modalNextButton.addEventListener('click', () => {
 // --- Initial Load ---
 
 function init() {
-    const PIECES = { ...window.HEROES, ...window.MONSTERS };
+    boardContainer = document.getElementById('board-container');
+    movesLeftEl = document.getElementById('moves-left');
+    puzzleTitleEl = document.getElementById('puzzle-title');
+    puzzleObjectiveEl = document.getElementById('puzzle-objective');
+    resetButton = document.getElementById('reset-button');
+    puzzleSelect = document.getElementById('puzzle-select');
+    modal = document.getElementById('modal');
+    modalTitle = document.getElementById('modal-title');
+    modalMessage = document.getElementById('modal-message');
+    modalNextButton = document.getElementById('modal-next-button');
+    modalCloseButton = document.getElementById('modal-close-button');
+
+    PIECES = { ...window.HEROES, ...window.MONSTERS };
     createBoard();
     populatePuzzleSelect();
     setupPuzzle(0);
