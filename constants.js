@@ -19,3 +19,11 @@ const PIECE_TYPES = {
 window.Attack_Type = Attack_Type;
 window.Armor_Type = Armor_Type;
 window.PIECE_TYPES = PIECE_TYPES;
+
+// Add this
+const MoveType = {
+    MOVE: 'move',
+    ATTACK: 'attack'
+};
+
+window.MoveType = MoveType;

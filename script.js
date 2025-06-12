@@ -49,6 +49,7 @@ let gameState = {
     board: [],
     selectedPiece: null,
     validMoves: [],
+    validAttackMoves: [], // Add this
     movesLeft: 0,
     currentPuzzleIndex: 0,
     isGameOver: false
@@ -122,12 +123,14 @@ function getSlidingMoves(row, col, directions, board, range) {
 
 function getBishopMoves(row, col, board, piece) {
     const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-    return getSlidingMoves(row, col, directions, board, piece.range || 8);
+    // Use piece.Move for movement range
+    return getSlidingMoves(row, col, directions, board, piece.Move);
 }
 
 function getRookMoves(row, col, board, piece) {
     const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    return getSlidingMoves(row, col, directions, board, piece.range || 8);
+    // Use piece.Move for movement range
+    return getSlidingMoves(row, col, directions, board, piece.Move);
 }
 
 function getValidMovesFromOffsets(row, col, offsets, board) {
@@ -200,20 +203,25 @@ function onSquareClick(event) {
     const square = event.currentTarget;
     const row = parseInt(square.dataset.row);
     const col = parseInt(square.dataset.col);
-    const piece = gameState.board[row][col];
+    const pieceOnTargetSquare = gameState.board[row][col];
 
     if (gameState.selectedPiece) {
-        const isValidMove = gameState.validMoves.some(m => m[0] === row && m[1] === col);
-        if (isValidMove) {
+        const { piece: selectedPieceData, row: fromRow, col: fromCol } = gameState.selectedPiece;
+
+        const isAttack = gameState.validAttackMoves.some(m => m[0] === row && m[1] === col);
+        const isMove = gameState.validMoves.some(m => m[0] === row && m[1] === col);
+
+        if (isAttack && pieceOnTargetSquare && pieceOnTargetSquare.type === PIECE_TYPES.MONSTER) {
+            executeAttack(gameState.selectedPiece, [row, col]);
+        } else if (isMove && !pieceOnTargetSquare) {
             movePiece(gameState.selectedPiece, [row, col]);
         } else {
             deselectPiece();
-            // If player clicks another of their own pieces, select it
-            if (piece && piece.type === PIECE_TYPES.HERO) {
-                 selectPiece(row, col);
+            if (pieceOnTargetSquare && pieceOnTargetSquare.type === PIECE_TYPES.HERO) {
+                selectPiece(row, col);
             }
         }
-    } else if (piece && piece.type === PIECE_TYPES.HERO) {
+    } else if (pieceOnTargetSquare && pieceOnTargetSquare.type === PIECE_TYPES.HERO) {
         selectPiece(row, col);
     }
 }
@@ -225,14 +233,43 @@ function selectPiece(row, col) {
 
     gameState.selectedPiece = { row, col, piece };
     const pieceDefinition = PIECES[piece.name];
-    gameState.validMoves = pieceDefinition.moves(row, col, gameState.board, pieceDefinition);
 
+    // Get valid moves (movement to empty squares)
+    gameState.validMoves = pieceDefinition.moves(row, col, gameState.board, pieceDefinition)
+        .filter(move => !gameState.board[move[0]][move[1]]); // Ensure target square is empty for movement
+
+    // Get valid attack moves (targeting enemy pieces within Attack_Range)
+    gameState.validAttackMoves = [];
+    if (pieceDefinition.Attack_Range > 0) {
+        for (let r_offset = -pieceDefinition.Attack_Range; r_offset <= pieceDefinition.Attack_Range; r_offset++) {
+            for (let c_offset = -pieceDefinition.Attack_Range; c_offset <= pieceDefinition.Attack_Range; c_offset++) {
+                if (r_offset === 0 && c_offset === 0) continue; // Cannot attack self
+
+                // Allow attacks only within a square (Manhattan distance) for now for simplicity with Attack_Range
+                // This means Attack_Range = 1 is adjacent squares (including diagonals)
+                // Attack_Range = 2 is squares up to 2 units away, etc.
+                if (Math.abs(r_offset) + Math.abs(c_offset) > pieceDefinition.Attack_Range) continue;
+
+
+                const targetRow = row + r_offset;
+                const targetCol = col + c_offset;
+
+                if (isValidSquare(targetRow, targetCol)) {
+                    const targetPiece = gameState.board[targetRow][targetCol];
+                    if (targetPiece && targetPiece.type === PIECE_TYPES.MONSTER) {
+                        gameState.validAttackMoves.push([targetRow, targetCol]);
+                    }
+                }
+            }
+        }
+    }
     highlightValidMoves();
 }
 
 function deselectPiece() {
     gameState.selectedPiece = null;
     gameState.validMoves = [];
+    gameState.validAttackMoves = []; // Add this line
     renderBoard(); // Rerender to remove highlights
 }
 
@@ -248,6 +285,43 @@ function movePiece(selected, toPos) {
     updateMovesCounter();
     deselectPiece(); // This also triggers a rerender
 
+    checkGameStatus();
+}
+
+function executeAttack(selectedAttacker, targetPos) {
+    const [toRow, toCol] = targetPos;
+    const targetPiece = gameState.board[toRow][toCol]; // Get the piece object from the board
+
+    if (!targetPiece || targetPiece.type !== PIECE_TYPES.MONSTER) {
+        console.error("Invalid target for attack:", targetPiece);
+        deselectPiece();
+        return;
+    }
+
+    // Ensure Health and Attack are numbers
+    const attackerAttack = Number(selectedAttacker.piece.Attack);
+    let targetHealth = Number(targetPiece.Health);
+
+    if (isNaN(attackerAttack) || isNaN(targetHealth)) {
+        console.error("Attack or Health is not a number", selectedAttacker.piece, targetPiece);
+        deselectPiece();
+        return;
+    }
+
+    targetHealth -= attackerAttack;
+    targetPiece.Health = targetHealth; // Update health on the piece object on the board
+
+    console.log(`${selectedAttacker.piece.name} attacks ${targetPiece.name} at [${toRow},${toCol}]. ${targetPiece.name} HP: ${targetPiece.Health}`);
+
+
+    if (targetPiece.Health <= 0) {
+        gameState.board[toRow][toCol] = null; // Remove monster from board
+        console.log(`${targetPiece.name} defeated!`);
+    }
+
+    gameState.movesLeft--;
+    updateMovesCounter();
+    deselectPiece(); // This also triggers a rerender and clears valid moves/attacks
     checkGameStatus();
 }
 
@@ -291,20 +365,50 @@ function highlightValidMoves() {
      renderBoard(); // Start with a clean board
 
     // Highlight selected piece
-    const { row, col } = gameState.selectedPiece;
-    const selectedSquare = boardContainer.children[row * 8 + col];
-    selectedSquare.classList.add('selected');
+    if (gameState.selectedPiece) {
+        const { row, col } = gameState.selectedPiece;
+        const selectedSquare = boardContainer.children[row * 8 + col];
+        if (selectedSquare) { // Check if selectedSquare exists
+            selectedSquare.classList.add('selected');
+        }
+    }
 
-    // Highlight valid moves
+    // Highlight valid moves (movement)
     gameState.validMoves.forEach(([r, c]) => {
         const square = boardContainer.children[r * 8 + c];
-        const highlightEl = document.createElement('div');
-        highlightEl.classList.add('highlight');
-        // Ensure highlight doesn't cover piece by inserting it first
-        if (square.firstChild) {
-            square.insertBefore(highlightEl, square.firstChild);
-        } else {
-            square.appendChild(highlightEl);
+        if (square) { // Check if square exists
+            const highlightEl = document.createElement('div');
+            highlightEl.classList.add('highlight'); // Blueish highlight for movement
+            // Ensure highlight doesn't cover piece by inserting it first
+            if (square.firstChild) {
+                square.insertBefore(highlightEl, square.firstChild);
+            } else {
+                square.appendChild(highlightEl);
+            }
+        }
+    });
+
+    // Highlight valid attack moves
+    gameState.validAttackMoves.forEach(([r, c]) => {
+        const square = boardContainer.children[r * 8 + c];
+        if (square) { // Check if square exists
+            // If a square is both a move and an attack, the attack highlight will be on top
+            // or you might want to merge them or give priority.
+            // For now, let's add a separate attack highlight.
+            // Remove existing non-attack highlight if present to avoid overlap issues
+            const existingHighlight = square.querySelector('.highlight');
+            if (existingHighlight) {
+                existingHighlight.remove();
+            }
+
+            const highlightEl = document.createElement('div');
+            highlightEl.classList.add('highlight-attack'); // Reddish highlight for attacks
+            // Ensure highlight doesn't cover piece by inserting it first
+            if (square.firstChild) {
+                square.insertBefore(highlightEl, square.firstChild);
+            } else {
+                square.appendChild(highlightEl);
+            }
         }
     });
 }
