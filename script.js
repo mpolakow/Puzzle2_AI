@@ -276,7 +276,7 @@ function selectPiece(row, col) {
                 // Allow attacks only within a square (Manhattan distance) for now for simplicity with Attack_Range
                 // This means Attack_Range = 1 is adjacent squares (including diagonals)
                 // Attack_Range = 2 is squares up to 2 units away, etc.
-                if (Math.abs(r_offset) + Math.abs(c_offset) > pieceDefinition.Attack_Range) continue;
+                // if (Math.abs(r_offset) + Math.abs(c_offset) > pieceDefinition.Attack_Range) continue;
 
 
                 const targetRow = row + r_offset;
