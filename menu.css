@@ -1,0 +1,11 @@
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.font-medieval {
+    font-family: 'MedievalSharp', cursive;
+}
+
+.game-link {
+    text-decoration: none;
+}
