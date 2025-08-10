@@ -176,6 +176,9 @@ function createBoard() {
 function setupPuzzle(puzzleIndex) {
     gameState.isGameOver = false;
     gameState.currentPuzzleIndex = puzzleIndex;
+    if (puzzleSelect) {
+        puzzleSelect.value = puzzleIndex;
+    }
     const puzzle = PUZZLES[puzzleIndex];
 
     // Setup board state
@@ -496,7 +499,19 @@ function init() {
     PIECES = { ...window.HEROES, ...window.MONSTERS };
     createBoard();
     populatePuzzleSelect();
-    setupPuzzle(0);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const levelParam = urlParams.get('level');
+    let startingPuzzle = 0;
+
+    if (levelParam) {
+        const level = parseInt(levelParam, 10);
+        if (!isNaN(level) && level >= 0 && level < PUZZLES.length) {
+            startingPuzzle = level;
+        }
+    }
+
+    setupPuzzle(startingPuzzle);
 
     resetButton.addEventListener('click', () => setupPuzzle(gameState.currentPuzzleIndex));
     puzzleSelect.addEventListener('change', (e) => setupPuzzle(parseInt(e.target.value)));
