@@ -504,9 +504,9 @@ function init() {
     const levelParam = urlParams.get('level');
     let startingPuzzle = 0;
 
-    if (levelParam) {
-        const level = parseInt(levelParam, 10);
-        if (!isNaN(level) && level >= 0 && level < PUZZLES.length) {
+    if (levelParam && window.LEVEL_CODES && typeof window.LEVEL_CODES[levelParam.toUpperCase()] !== 'undefined') {
+        const level = window.LEVEL_CODES[levelParam.toUpperCase()];
+        if (level >= 0 && level < PUZZLES.length) {
             startingPuzzle = level;
         }
     }

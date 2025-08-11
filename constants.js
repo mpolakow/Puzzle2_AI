@@ -20,6 +20,12 @@ window.Attack_Type = Attack_Type;
 window.Armor_Type = Armor_Type;
 window.PIECE_TYPES = PIECE_TYPES;
 
+const LEVEL_CODES = {
+    "KNIGHTMARE": 0,
+    "ARCHERPATH": 1,
+    "WARRIORWAY": 2
+};
+
 // Add this
 const MoveType = {
     MOVE: 'move',
@@ -27,3 +33,4 @@ const MoveType = {
 };
 
 window.MoveType = MoveType;
+window.LEVEL_CODES = LEVEL_CODES;
