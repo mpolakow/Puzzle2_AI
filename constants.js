@@ -28,7 +28,8 @@ window.BOARD_HEIGHT = BOARD_HEIGHT;
 const LEVEL_CODES = {
     "KNIGHTMARE": 0,
     "ARCHERPATH": 1,
-    "WARRIORWAY": 2
+    "WARRIORWAY": 2,
+    "TINYTRAP": 3
 };
 
 // Add this
