@@ -18,6 +18,8 @@ const PUZZLES = [
     {
         name: "Knight's Charge",
         objective: "Capture the Goblin.",
+        width: 8,
+        height: 8,
         moves: 3,
         layout: [
             { piece: 'knight', pos: [7, 1] },
@@ -27,6 +29,8 @@ const PUZZLES = [
     {
         name: "Archer's Perch",
         objective: "Eliminate the Orc and Ogre.",
+        width: 8,
+        height: 8,
         moves: 4,
         layout: [
             { piece: 'archer', pos: [7, 0] },
@@ -37,12 +41,25 @@ const PUZZLES = [
     {
         name: "Warrior's Stand",
         objective: "Defeat the mighty Ogre.",
+        width: 8,
+        height: 8,
         moves: 5,
         layout: [
             { piece: 'warrior', pos: [4, 4] },
             { piece: 'ogre', pos: [1, 1] },
             { piece: 'goblin', pos: [3, 2] },
             { piece: 'goblin', pos: [3, 6] },
+        ]
+    },
+    {
+        name: "Goblin's Tiny Trap",
+        objective: "Defeat the Goblin in the small room.",
+        width: 5,
+        height: 5,
+        moves: 2,
+        layout: [
+            { piece: 'warrior', pos: [4, 2] },
+            { piece: 'goblin', pos: [0, 2] }
         ]
     }
 ];
@@ -177,19 +194,21 @@ function createBoard() {
 }
 
 function setupPuzzle(puzzleIndex) {
-    // When a puzzle is loaded, reset the board to its default size (8x8)
-    // because puzzles have hardcoded positions that assume an 8x8 board.
-    window.BOARD_WIDTH = 8;
-    window.BOARD_HEIGHT = 8;
-    boardWidthInput.value = 8;
-    boardHeightInput.value = 8;
-
-    // Re-create the board visuals to match the 8x8 size
-    createBoard();
-
     gameState.isGameOver = false;
     gameState.currentPuzzleIndex = puzzleIndex;
     const puzzle = PUZZLES[puzzleIndex];
+
+    // Use the puzzle's defined size, or default to 8x8.
+    const newWidth = puzzle.width || 8;
+    const newHeight = puzzle.height || 8;
+
+    window.BOARD_WIDTH = newWidth;
+    window.BOARD_HEIGHT = newHeight;
+    boardWidthInput.value = newWidth;
+    boardHeightInput.value = newHeight;
+
+    // Re-create the board visuals to match the puzzle's size
+    createBoard();
 
     // Setup board state
     gameState.board = Array(window.BOARD_HEIGHT).fill(null).map(() => Array(window.BOARD_WIDTH).fill(null));
