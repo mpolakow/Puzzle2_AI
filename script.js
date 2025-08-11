@@ -3,7 +3,6 @@ let movesLeftEl;
 let puzzleTitleEl;
 let puzzleObjectiveEl;
 let resetButton;
-let puzzleSelect;
 let modal;
 let modalTitle;
 let modalMessage;
@@ -176,9 +175,6 @@ function createBoard() {
 function setupPuzzle(puzzleIndex) {
     gameState.isGameOver = false;
     gameState.currentPuzzleIndex = puzzleIndex;
-    if (puzzleSelect) {
-        puzzleSelect.value = puzzleIndex;
-    }
     const puzzle = PUZZLES[puzzleIndex];
 
     // Setup board state
@@ -448,17 +444,20 @@ function updateMovesCounter() {
     movesLeftEl.textContent = gameState.movesLeft;
 }
 
-function populatePuzzleSelect() {
-     PUZZLES.forEach((puzzle, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = puzzle.name;
-        puzzleSelect.appendChild(option);
-     });
-}
-
 function showModal(title, message) {
     modalTitle.textContent = title;
+
+    const isLastPuzzle = gameState.currentPuzzleIndex >= PUZZLES.length - 1;
+    const isVictory = title === 'Victory!';
+
+    if (isVictory && !isLastPuzzle) {
+        const nextPuzzleIndex = gameState.currentPuzzleIndex + 1;
+        const levelCode = Object.keys(window.LEVEL_CODES).find(key => window.LEVEL_CODES[key] === nextPuzzleIndex);
+        if (levelCode) {
+            message += `\n\nThe code for the next level is: ${levelCode}`;
+        }
+    }
+
     modalMessage.textContent = message;
     modal.style.display = 'flex';
     const modalContent = modal.querySelector('.transform');
@@ -467,8 +466,7 @@ function showModal(title, message) {
     }, 10);
 
     // Logic for the 'Next Puzzle' button
-    const isLastPuzzle = gameState.currentPuzzleIndex >= PUZZLES.length - 1;
-    modalNextButton.style.display = (title === 'Victory!' && !isLastPuzzle) ? 'inline-block' : 'none';
+    modalNextButton.style.display = (isVictory && !isLastPuzzle) ? 'inline-block' : 'none';
 }
 
 function hideModal() {
@@ -489,7 +487,6 @@ function init() {
     puzzleTitleEl = document.getElementById('puzzle-title');
     puzzleObjectiveEl = document.getElementById('puzzle-objective');
     resetButton = document.getElementById('reset-button');
-    puzzleSelect = document.getElementById('puzzle-select');
     modal = document.getElementById('modal');
     modalTitle = document.getElementById('modal-title');
     modalMessage = document.getElementById('modal-message');
@@ -498,7 +495,6 @@ function init() {
 
     PIECES = { ...window.HEROES, ...window.MONSTERS };
     createBoard();
-    populatePuzzleSelect();
 
     const urlParams = new URLSearchParams(window.location.search);
     const levelParam = urlParams.get('level');
@@ -514,14 +510,12 @@ function init() {
     setupPuzzle(startingPuzzle);
 
     resetButton.addEventListener('click', () => setupPuzzle(gameState.currentPuzzleIndex));
-    puzzleSelect.addEventListener('change', (e) => setupPuzzle(parseInt(e.target.value)));
 
     modalCloseButton.addEventListener('click', hideModal);
     modalNextButton.addEventListener('click', () => {
         hideModal();
         const nextPuzzleIndex = gameState.currentPuzzleIndex + 1;
         if (nextPuzzleIndex < PUZZLES.length) {
-            puzzleSelect.value = nextPuzzleIndex;
             setupPuzzle(nextPuzzleIndex);
         }
     });
