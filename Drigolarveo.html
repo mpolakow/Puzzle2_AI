@@ -23,6 +23,18 @@
                  <div id="moves-counter" class="text-lg">Moves Left: <span id="moves-left" class="font-bold text-xl text-white">-</span></div>
                  <button id="reset-button" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded transition duration-300">Reset Puzzle</button>
             </div>
+            <div id="board-size-container" class="mt-4">
+                <h3 class="font-medieval text-xl text-amber-200 mb-2">Board Size</h3>
+                <div class="flex items-center mb-2">
+                    <label for="board-width-input" class="text-gray-400 mr-2">Width:</label>
+                    <input type="number" id="board-width-input" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block w-full p-2.5" value="8">
+                </div>
+                <div class="flex items-center">
+                    <label for="board-height-input" class="text-gray-400 mr-2">Height:</label>
+                    <input type="number" id="board-height-input" class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-amber-500 focus:border-amber-500 block w-full p-2.5" value="8">
+                </div>
+                <button id="apply-size-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition duration-300 mt-2">Apply</button>
+            </div>
         </div>
     </div>
     

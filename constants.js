@@ -16,9 +16,14 @@ const PIECE_TYPES = {
     MONSTER: 'monster'
 };
 
+const BOARD_WIDTH = 8;
+const BOARD_HEIGHT = 8;
+
 window.Attack_Type = Attack_Type;
 window.Armor_Type = Armor_Type;
 window.PIECE_TYPES = PIECE_TYPES;
+window.BOARD_WIDTH = BOARD_WIDTH;
+window.BOARD_HEIGHT = BOARD_HEIGHT;
 
 const LEVEL_CODES = {
     "KNIGHTMARE": 0,

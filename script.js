@@ -8,6 +8,9 @@ let modalTitle;
 let modalMessage;
 let modalNextButton;
 let modalCloseButton;
+let boardWidthInput;
+let boardHeightInput;
+let applySizeButton;
 
 let PIECES = {};
 
@@ -151,7 +154,7 @@ function getValidMovesFromOffsets(row, col, offsets, board) {
 }
 
 function isValidSquare(row, col) {
-    return row >= 0 && row < 8 && col >= 0 && col < 8;
+    return row >= 0 && row < window.BOARD_HEIGHT && col >= 0 && col < window.BOARD_WIDTH;
 }
 
 
@@ -159,8 +162,9 @@ function isValidSquare(row, col) {
 
 function createBoard() {
     boardContainer.innerHTML = '';
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
+    boardContainer.style.gridTemplateColumns = `repeat(${window.BOARD_WIDTH}, 1fr)`;
+    for (let row = 0; row < window.BOARD_HEIGHT; row++) {
+        for (let col = 0; col < window.BOARD_WIDTH; col++) {
             const square = document.createElement('div');
             square.classList.add('square', (row + col) % 2 === 0 ? 'light' : 'dark');
             square.dataset.row = row;
@@ -173,15 +177,29 @@ function createBoard() {
 }
 
 function setupPuzzle(puzzleIndex) {
+    // When a puzzle is loaded, reset the board to its default size (8x8)
+    // because puzzles have hardcoded positions that assume an 8x8 board.
+    window.BOARD_WIDTH = 8;
+    window.BOARD_HEIGHT = 8;
+    boardWidthInput.value = 8;
+    boardHeightInput.value = 8;
+
+    // Re-create the board visuals to match the 8x8 size
+    createBoard();
+
     gameState.isGameOver = false;
     gameState.currentPuzzleIndex = puzzleIndex;
     const puzzle = PUZZLES[puzzleIndex];
 
     // Setup board state
-    gameState.board = Array(8).fill(null).map(() => Array(8).fill(null));
+    gameState.board = Array(window.BOARD_HEIGHT).fill(null).map(() => Array(window.BOARD_WIDTH).fill(null));
     puzzle.layout.forEach(p => {
         const [row, col] = p.pos;
-        gameState.board[row][col] = { ...PIECES[p.piece], name: p.piece };
+        if (isValidSquare(row, col)) {
+            gameState.board[row][col] = { ...PIECES[p.piece], name: p.piece };
+        } else {
+            console.warn(`Piece ${p.piece} at [${row},${col}] is out of bounds for an 8x8 board and was not placed.`);
+        }
     });
 
     // Setup game state
@@ -370,9 +388,9 @@ function checkGameStatus() {
 
 function renderBoard() {
     const squares = boardContainer.children;
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const squareEl = squares[row * 8 + col];
+    for (let row = 0; row < window.BOARD_HEIGHT; row++) {
+        for (let col = 0; col < window.BOARD_WIDTH; col++) {
+            const squareEl = squares[row * window.BOARD_WIDTH + col];
             const piece = gameState.board[row][col];
             // Clear previous content
             squareEl.innerHTML = '';
@@ -394,7 +412,7 @@ function highlightValidMoves() {
     // Highlight selected piece
     if (gameState.selectedPiece) {
         const { row, col } = gameState.selectedPiece;
-        const selectedSquare = boardContainer.children[row * 8 + col];
+        const selectedSquare = boardContainer.children[row * window.BOARD_WIDTH + col];
         if (selectedSquare) { // Check if selectedSquare exists
             selectedSquare.classList.add('selected');
         }
@@ -402,7 +420,7 @@ function highlightValidMoves() {
 
     // Highlight valid moves (movement)
     gameState.validMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * 8 + c];
+        const square = boardContainer.children[r * window.BOARD_WIDTH + c];
         if (square) { // Check if square exists
             const highlightEl = document.createElement('div');
             highlightEl.classList.add('highlight'); // Blueish highlight for movement
@@ -417,7 +435,7 @@ function highlightValidMoves() {
 
     // Highlight valid attack moves
     gameState.validAttackMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * 8 + c];
+        const square = boardContainer.children[r * window.BOARD_WIDTH + c];
         if (square) { // Check if square exists
             // If a square is both a move and an attack, the attack highlight will be on top
             // or you might want to merge them or give priority.
@@ -494,6 +512,26 @@ function init() {
     modalCloseButton = document.getElementById('modal-close-button');
 
     PIECES = { ...window.HEROES, ...window.MONSTERS };
+
+    boardWidthInput = document.getElementById('board-width-input');
+    boardHeightInput = document.getElementById('board-height-input');
+    applySizeButton = document.getElementById('apply-size-button');
+
+    applySizeButton.addEventListener('click', () => {
+        const newWidth = parseInt(boardWidthInput.value);
+        const newHeight = parseInt(boardHeightInput.value);
+
+        if (newWidth > 0 && newHeight > 0) {
+            window.BOARD_WIDTH = newWidth;
+            window.BOARD_HEIGHT = newHeight;
+            createBoard();
+            // We can't setup a puzzle because the pieces are hardcoded.
+            // So we just create an empty board.
+            gameState.board = Array(window.BOARD_HEIGHT).fill(null).map(() => Array(window.BOARD_WIDTH).fill(null));
+            renderBoard();
+        }
+    });
+
     createBoard();
 
     const urlParams = new URLSearchParams(window.location.search);
