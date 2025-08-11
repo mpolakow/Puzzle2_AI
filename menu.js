@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const goToLevel = () => {
         const levelCode = levelCodeInput.value.trim();
         if (levelCode) {
-            window.location.href = `heros-gambit.html?level=${levelCode}`;
+            window.location.href = `Drigolarveo.html?level=${levelCode}`;
         }
     };
 
