@@ -16,6 +16,7 @@ const PUZZLES = [
         name: "Knight's Charge",
         objective: "Capture the Goblin.",
         moves: 3,
+        boardSize: 8,
         layout: [
             { piece: 'knight', pos: [7, 1] },
             { piece: 'goblin', pos: [5, 2] }
@@ -25,6 +26,7 @@ const PUZZLES = [
         name: "Archer's Perch",
         objective: "Eliminate the Orc and Ogre.",
         moves: 4,
+        boardSize: 8,
         layout: [
             { piece: 'archer', pos: [7, 0] },
             { piece: 'orc', pos: [4, 3] },
@@ -35,6 +37,7 @@ const PUZZLES = [
         name: "Warrior's Stand",
         objective: "Defeat the mighty Ogre.",
         moves: 5,
+        boardSize: 8,
         layout: [
             { piece: 'warrior', pos: [4, 4] },
             { piece: 'ogre', pos: [1, 1] },
@@ -51,7 +54,8 @@ let gameState = {
     validAttackMoves: [], // Add this
     movesLeft: 0,
     currentPuzzleIndex: 0,
-    isGameOver: false
+    isGameOver: false,
+    boardSize: 8
 };
 
 // --- Piece Movement Logic ---
@@ -151,7 +155,7 @@ function getValidMovesFromOffsets(row, col, offsets, board) {
 }
 
 function isValidSquare(row, col) {
-    return row >= 0 && row < 8 && col >= 0 && col < 8;
+    return row >= 0 && row < gameState.boardSize && col >= 0 && col < gameState.boardSize;
 }
 
 
@@ -159,8 +163,9 @@ function isValidSquare(row, col) {
 
 function createBoard() {
     boardContainer.innerHTML = '';
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
+    boardContainer.style.gridTemplateColumns = `repeat(${gameState.boardSize}, 1fr)`;
+    for (let row = 0; row < gameState.boardSize; row++) {
+        for (let col = 0; col < gameState.boardSize; col++) {
             const square = document.createElement('div');
             square.classList.add('square', (row + col) % 2 === 0 ? 'light' : 'dark');
             square.dataset.row = row;
@@ -176,9 +181,10 @@ function setupPuzzle(puzzleIndex) {
     gameState.isGameOver = false;
     gameState.currentPuzzleIndex = puzzleIndex;
     const puzzle = PUZZLES[puzzleIndex];
+    gameState.boardSize = puzzle.boardSize || 8; // Default to 8 if not specified
 
     // Setup board state
-    gameState.board = Array(8).fill(null).map(() => Array(8).fill(null));
+    gameState.board = Array(gameState.boardSize).fill(null).map(() => Array(gameState.boardSize).fill(null));
     puzzle.layout.forEach(p => {
         const [row, col] = p.pos;
         gameState.board[row][col] = { ...PIECES[p.piece], name: p.piece };
@@ -370,9 +376,9 @@ function checkGameStatus() {
 
 function renderBoard() {
     const squares = boardContainer.children;
-    for (let row = 0; row < 8; row++) {
-        for (let col = 0; col < 8; col++) {
-            const squareEl = squares[row * 8 + col];
+    for (let row = 0; row < gameState.boardSize; row++) {
+        for (let col = 0; col < gameState.boardSize; col++) {
+            const squareEl = squares[row * gameState.boardSize + col];
             const piece = gameState.board[row][col];
             // Clear previous content
             squareEl.innerHTML = '';
@@ -394,7 +400,7 @@ function highlightValidMoves() {
     // Highlight selected piece
     if (gameState.selectedPiece) {
         const { row, col } = gameState.selectedPiece;
-        const selectedSquare = boardContainer.children[row * 8 + col];
+        const selectedSquare = boardContainer.children[row * gameState.boardSize + col];
         if (selectedSquare) { // Check if selectedSquare exists
             selectedSquare.classList.add('selected');
         }
@@ -402,7 +408,7 @@ function highlightValidMoves() {
 
     // Highlight valid moves (movement)
     gameState.validMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * 8 + c];
+        const square = boardContainer.children[r * gameState.boardSize + c];
         if (square) { // Check if square exists
             const highlightEl = document.createElement('div');
             highlightEl.classList.add('highlight'); // Blueish highlight for movement
@@ -417,7 +423,7 @@ function highlightValidMoves() {
 
     // Highlight valid attack moves
     gameState.validAttackMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * 8 + c];
+        const square = boardContainer.children[r * gameState.boardSize + c];
         if (square) { // Check if square exists
             // If a square is both a move and an attack, the attack highlight will be on top
             // or you might want to merge them or give priority.

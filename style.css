@@ -8,9 +8,8 @@ body {
 }
 .board-container {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    width: 90vw;
-    max-width: 600px;
+    /* grid-template-columns is now set by JS */
+    width: 600px;
     aspect-ratio: 1 / 1; /* Ensures the board is always square */
     border: 5px solid #4a3f35;
     border-radius: 8px;
