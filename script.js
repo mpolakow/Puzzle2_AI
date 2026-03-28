@@ -76,80 +76,197 @@ let gameState = {
 
 // --- Piece Movement Logic ---
 
+function offsetToCube(row, col) {
+    var q = col - (row - (row&1)) / 2;
+    var r = row;
+    var s = -q - r;
+    return {q: q, r: r, s: s};
+}
+
+function cubeToOffset(q, r, s) {
+    var row = r;
+    var col = q + (row - (row&1)) / 2;
+    return {row: row, col: col};
+}
+
+function cubeDistance(a, b) {
+    return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.s - b.s)) / 2;
+}
+
 function getKnightMoves(row, col, board) {
-    const moves = [
-        [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-        [1, -2], [1, 2], [2, -1], [2, 1]
+    // Knight move on hex grid: 2 steps in one direction, 1 in another (or 3 steps)
+    // A standard hex knight move is jumping to the 12 hexes that are at distance 2,
+    // but not in a straight line. Or jumping to next-next-neighbor.
+    // In cube coordinates, this is a permutation of (+/-1, +/-2, +/-3) which sum to 0
+    // Actually, hex knight moves are:
+    const startCube = offsetToCube(row, col);
+    const knightDirs = [
+        {q: 3, r: -1, s: -2}, {q: 3, r: -2, s: -1}, {q: 2, r: 1, s: -3},
+        {q: 2, r: -3, s: 1}, {q: 1, r: 2, s: -3}, {q: 1, r: -3, s: 2},
+        {q: -1, r: 3, s: -2}, {q: -1, r: -2, s: 3}, {q: -2, r: 3, s: -1},
+        {q: -2, r: -1, s: 3}, {q: -3, r: 2, s: 1}, {q: -3, r: 1, s: 2}
     ];
-    return getValidMovesFromOffsets(row, col, moves, board);
-}
 
-function getKingMoves(row, col, board) {
-    const moves = [
-        [-1, -1], [-1, 0], [-1, 1],
-        [0, -1],           [0, 1],
-        [1, -1], [1, 0], [1, 1]
-    ];
-    return getValidMovesFromOffsets(row, col, moves, board);
-}
-
-function getPawnMoves(row, col, board) {
-    // Goblins (pawns) move one step forward (towards lower row index)
-     const moves = [[-1, 0]];
-     let validMoves = [];
-     for (const [dr, dc] of moves) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-        if(isValidSquare(newRow, newCol) && !board[newRow][newCol]) {
-            validMoves.push([newRow, newCol]);
-        }
-     }
-     // Capture moves
-     const captureMoves = [[-1, -1], [-1, 1]];
-     for (const [dr, dc] of captureMoves) {
-        const newRow = row + dr;
-        const newCol = col + dc;
-        if(isValidSquare(newRow, newCol) && board[newRow][newCol] && board[newRow][newCol].type === PIECE_TYPES.HERO) {
-            validMoves.push([newRow, newCol]);
-        }
-     }
-     return validMoves;
-}
-
-function getSlidingMoves(row, col, directions, board, range) {
-    let moves = [];
+    const moves = [];
     const pieceType = board[row][col].type;
 
-    for (const [dr, dc] of directions) {
-        for (let i = 1; i <= range; i++) {
-            const newRow = row + i * dr;
-            const newCol = col + i * dc;
+    for (const dir of knightDirs) {
+        const q = startCube.q + dir.q;
+        const r = startCube.r + dir.r;
+        const s = startCube.s + dir.s;
 
-            if (!isValidSquare(newRow, newCol)) break;
+        const offset = cubeToOffset(q, r, s);
+        const newRow = offset.row;
+        const newCol = offset.col;
 
+        if (isValidSquare(newRow, newCol)) {
             const targetSquare = board[newRow][newCol];
-            if (targetSquare) {
-                if (targetSquare.type !== pieceType) {
-                    moves.push([newRow, newCol]);
-                }
-                break;
+            if (!targetSquare || targetSquare.type !== pieceType) {
+                 moves.push([newRow, newCol]);
             }
-            moves.push([newRow, newCol]);
         }
     }
     return moves;
 }
 
+// --- Hex Coordinates Math ---
+
+// For an odd-r layout:
+const hexDirections = {
+    even: [[-1, -1], [-1, 0], [0, 1], [1, 0], [1, -1], [0, -1]],
+    odd:  [[-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [0, -1]]
+};
+
+function getHexNeighbors(row, col) {
+    const isOdd = row % 2 !== 0;
+    const dirs = isOdd ? hexDirections.odd : hexDirections.even;
+    return dirs.map(([dr, dc]) => [row + dr, col + dc]);
+}
+
+function getKingMoves(row, col, board) {
+    const isOdd = row % 2 !== 0;
+    const moves = isOdd ? hexDirections.odd : hexDirections.even;
+    return getValidMovesFromOffsets(row, col, moves, board);
+}
+
+function getPawnMoves(row, col, board) {
+    // Goblins (pawns) move one step forward. In our hex map, "forward" (towards row 0)
+    // can be Top-Left or Top-Right.
+    const isOdd = row % 2 !== 0;
+    // For moving forward (row - 1):
+    const moveDirs = isOdd ? [[-1, 0], [-1, 1]] : [[-1, -1], [-1, 0]];
+
+    let validMoves = [];
+    // Regular moves (forward to empty spaces)
+    for (const [dr, dc] of moveDirs) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+        if(isValidSquare(newRow, newCol) && !board[newRow][newCol]) {
+            validMoves.push([newRow, newCol]);
+        }
+    }
+    // Capture moves (same as forward moves for pawns on hex grid unless defined otherwise)
+    for (const [dr, dc] of moveDirs) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+        if(isValidSquare(newRow, newCol) && board[newRow][newCol] && board[newRow][newCol].type === PIECE_TYPES.HERO) {
+            validMoves.push([newRow, newCol]);
+        }
+    }
+    return validMoves;
+}
+
+function getSlidingMoves(row, col, isBishop, board, range) {
+    let moves = [];
+    const pieceType = board[row][col].type;
+
+    // For hex grid, Rook slides along the 6 hex directions
+    // Bishop slides along the "diagonals" (jumps to the 6 next-nearest neighbors)
+    let directions = [];
+
+    if (!isBishop) {
+        // Rook directions are tricky to slide because the coordinate step changes
+        // between even and odd rows. We need to walk step by step.
+        // We'll define sliding in 6 directions by repeatedly taking a step in that direction.
+        // On a hex grid, a straight line means moving in one of the 6 neighbor directions consistently.
+        for (let dirIndex = 0; dirIndex < 6; dirIndex++) {
+            let r = row;
+            let c = col;
+            for (let i = 1; i <= range; i++) {
+                const isOdd = r % 2 !== 0;
+                const dirs = isOdd ? hexDirections.odd : hexDirections.even;
+                const [dr, dc] = dirs[dirIndex];
+                r += dr;
+                c += dc;
+
+                if (!isValidSquare(r, c)) break;
+
+                const targetSquare = board[r][c];
+                if (targetSquare) {
+                    if (targetSquare.type !== pieceType) {
+                        moves.push([r, c]);
+                    }
+                    break;
+                }
+                moves.push([r, c]);
+            }
+        }
+    } else {
+        // Bishop moves on diagonals (like a 3-way intersection jump)
+        // We'll approximate this by taking 2 steps in combinations, but simpler:
+        // Let's just give Bishop a star-like pattern or just use cube coordinates
+        // to find straight lines in the 3 axes.
+
+        // Actually, the most robust way to do sliding on hexes is with Cube coordinates.
+        // Let's implement Cube sliding.
+        const startCube = offsetToCube(row, col);
+        // 6 straight directions in cube coordinates
+        const cubeDirs = [
+            {q: 1, r: -1, s: 0}, {q: 1, r: 0, s: -1}, {q: 0, r: 1, s: -1},
+            {q: -1, r: 1, s: 0}, {q: -1, r: 0, s: 1}, {q: 0, r: -1, s: 1}
+        ];
+
+        // Diagonals in cube coordinates
+        const cubeDiags = [
+            {q: 2, r: -1, s: -1}, {q: 1, r: 1, s: -2}, {q: -1, r: 2, s: -1},
+            {q: -2, r: 1, s: 1}, {q: -1, r: -1, s: 2}, {q: 1, r: -2, s: 1}
+        ];
+
+        const usedDirs = isBishop ? cubeDiags : cubeDirs;
+
+        for (const dir of usedDirs) {
+            for (let i = 1; i <= range; i++) {
+                const q = startCube.q + dir.q * i;
+                const r = startCube.r + dir.r * i;
+                const s = startCube.s + dir.s * i;
+
+                const offset = cubeToOffset(q, r, s);
+                const r_off = offset.row;
+                const c_off = offset.col;
+
+                if (!isValidSquare(r_off, c_off)) break;
+
+                const targetSquare = board[r_off][c_off];
+                if (targetSquare) {
+                    if (targetSquare.type !== pieceType) {
+                        moves.push([r_off, c_off]);
+                    }
+                    break;
+                }
+                moves.push([r_off, c_off]);
+            }
+        }
+    }
+
+    return moves;
+}
+
 function getBishopMoves(row, col, board, piece) {
-    const directions = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
-    // Use piece.Move for movement range
-    return getSlidingMoves(row, col, directions, board, piece.Move);
+    return getSlidingMoves(row, col, true, board, piece.Move);
 }
 
 function getRookMoves(row, col, board, piece) {
-    const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-    // Use piece.Move for movement range
-    return getSlidingMoves(row, col, directions, board, piece.Move);
+    return getSlidingMoves(row, col, false, board, piece.Move);
 }
 
 function getValidMovesFromOffsets(row, col, offsets, board) {
@@ -179,17 +296,25 @@ function isValidSquare(row, col) {
 
 function createBoard() {
     boardContainer.innerHTML = '';
-    boardContainer.style.gridTemplateColumns = `repeat(${window.BOARD_WIDTH}, 1fr)`;
+    // Use flex column for hex board, not grid
+    boardContainer.style.gridTemplateColumns = '';
     for (let row = 0; row < window.BOARD_HEIGHT; row++) {
+        const rowEl = document.createElement('div');
+        rowEl.classList.add('row');
+        if (row % 2 !== 0) {
+            rowEl.classList.add('odd');
+        }
         for (let col = 0; col < window.BOARD_WIDTH; col++) {
             const square = document.createElement('div');
+            // Can use same light/dark logic, or simplify for hex map
             square.classList.add('square', (row + col) % 2 === 0 ? 'light' : 'dark');
             square.dataset.row = row;
             square.dataset.col = col;
             // The event listener is on the square, which is crucial
             square.addEventListener('click', onSquareClick);
-            boardContainer.appendChild(square);
+            rowEl.appendChild(square);
         }
+        boardContainer.appendChild(rowEl);
     }
 }
 
@@ -302,21 +427,21 @@ function selectPiece(row, col) {
         gameState.validMoves = [];
     }
 
-    // Get valid attack moves (targeting enemy pieces within Attack_Range)
+    // Get valid attack moves (targeting enemy pieces within Attack_Range using hex distance)
     gameState.validAttackMoves = [];
     if (pieceDefinition.Attack_Range > 0) {
-        for (let r_offset = -pieceDefinition.Attack_Range; r_offset <= pieceDefinition.Attack_Range; r_offset++) {
-            for (let c_offset = -pieceDefinition.Attack_Range; c_offset <= pieceDefinition.Attack_Range; c_offset++) {
-                if (r_offset === 0 && c_offset === 0) continue; // Cannot attack self
+        const startCube = offsetToCube(row, col);
+        const range = pieceDefinition.Attack_Range;
 
-                // Allow attacks only within a square (Manhattan distance) for now for simplicity with Attack_Range
-                // This means Attack_Range = 1 is adjacent squares (including diagonals)
-                // Attack_Range = 2 is squares up to 2 units away, etc.
-                // if (Math.abs(r_offset) + Math.abs(c_offset) > pieceDefinition.Attack_Range) continue;
+        for (let q = -range; q <= range; q++) {
+            for (let r = Math.max(-range, -q - range); r <= Math.min(range, -q + range); r++) {
+                let s = -q - r;
+                if (q === 0 && r === 0 && s === 0) continue; // Cannot attack self
 
-
-                const targetRow = row + r_offset;
-                const targetCol = col + c_offset;
+                const targetCube = {q: startCube.q + q, r: startCube.r + r, s: startCube.s + s};
+                const targetOffset = cubeToOffset(targetCube.q, targetCube.r, targetCube.s);
+                const targetRow = targetOffset.row;
+                const targetCol = targetOffset.col;
 
                 if (isValidSquare(targetRow, targetCol)) {
                     const targetPiece = gameState.board[targetRow][targetCol];
@@ -406,10 +531,12 @@ function checkGameStatus() {
 // --- Rendering & UI Updates ---
 
 function renderBoard() {
-    const squares = boardContainer.children;
     for (let row = 0; row < window.BOARD_HEIGHT; row++) {
+        const rowEl = boardContainer.children[row];
+        if (!rowEl) continue;
         for (let col = 0; col < window.BOARD_WIDTH; col++) {
-            const squareEl = squares[row * window.BOARD_WIDTH + col];
+            const squareEl = rowEl.children[col];
+            if (!squareEl) continue;
             const piece = gameState.board[row][col];
             // Clear previous content
             squareEl.innerHTML = '';
@@ -431,47 +558,56 @@ function highlightValidMoves() {
     // Highlight selected piece
     if (gameState.selectedPiece) {
         const { row, col } = gameState.selectedPiece;
-        const selectedSquare = boardContainer.children[row * window.BOARD_WIDTH + col];
-        if (selectedSquare) { // Check if selectedSquare exists
-            selectedSquare.classList.add('selected');
+        const rowEl = boardContainer.children[row];
+        if (rowEl) {
+            const selectedSquare = rowEl.children[col];
+            if (selectedSquare) { // Check if selectedSquare exists
+                selectedSquare.classList.add('selected');
+            }
         }
     }
 
     // Highlight valid moves (movement)
     gameState.validMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * window.BOARD_WIDTH + c];
-        if (square) { // Check if square exists
-            const highlightEl = document.createElement('div');
-            highlightEl.classList.add('highlight'); // Blueish highlight for movement
-            // Ensure highlight doesn't cover piece by inserting it first
-            if (square.firstChild) {
-                square.insertBefore(highlightEl, square.firstChild);
-            } else {
-                square.appendChild(highlightEl);
+        const rowEl = boardContainer.children[r];
+        if (rowEl) {
+            const square = rowEl.children[c];
+            if (square) { // Check if square exists
+                const highlightEl = document.createElement('div');
+                highlightEl.classList.add('highlight'); // Blueish highlight for movement
+                // Ensure highlight doesn't cover piece by inserting it first
+                if (square.firstChild) {
+                    square.insertBefore(highlightEl, square.firstChild);
+                } else {
+                    square.appendChild(highlightEl);
+                }
             }
         }
     });
 
     // Highlight valid attack moves
     gameState.validAttackMoves.forEach(([r, c]) => {
-        const square = boardContainer.children[r * window.BOARD_WIDTH + c];
-        if (square) { // Check if square exists
-            // If a square is both a move and an attack, the attack highlight will be on top
-            // or you might want to merge them or give priority.
-            // For now, let's add a separate attack highlight.
-            // Remove existing non-attack highlight if present to avoid overlap issues
-            const existingHighlight = square.querySelector('.highlight');
-            if (existingHighlight) {
-                existingHighlight.remove();
-            }
+        const rowEl = boardContainer.children[r];
+        if (rowEl) {
+            const square = rowEl.children[c];
+            if (square) { // Check if square exists
+                // If a square is both a move and an attack, the attack highlight will be on top
+                // or you might want to merge them or give priority.
+                // For now, let's add a separate attack highlight.
+                // Remove existing non-attack highlight if present to avoid overlap issues
+                const existingHighlight = square.querySelector('.highlight');
+                if (existingHighlight) {
+                    existingHighlight.remove();
+                }
 
-            const highlightEl = document.createElement('div');
-            highlightEl.classList.add('highlight-attack'); // Reddish highlight for attacks
-            // Ensure highlight doesn't cover piece by inserting it first
-            if (square.firstChild) {
-                square.insertBefore(highlightEl, square.firstChild);
-            } else {
-                square.appendChild(highlightEl);
+                const highlightEl = document.createElement('div');
+                highlightEl.classList.add('highlight-attack'); // Reddish highlight for attacks
+                // Ensure highlight doesn't cover piece by inserting it first
+                if (square.firstChild) {
+                    square.insertBefore(highlightEl, square.firstChild);
+                } else {
+                    square.appendChild(highlightEl);
+                }
             }
         }
     });
