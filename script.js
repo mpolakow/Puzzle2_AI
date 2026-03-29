@@ -8,8 +8,7 @@ let modalTitle;
 let modalMessage;
 let modalNextButton;
 let modalCloseButton;
-let boardWidthInput;
-let boardHeightInput;
+let levelCodeInput;
 let applySizeButton;
 
 let PIECES = {};
@@ -368,8 +367,6 @@ function setupPuzzle(puzzleIndex) {
 
     window.BOARD_WIDTH = newWidth;
     window.BOARD_HEIGHT = newHeight;
-    boardWidthInput.value = newWidth;
-    boardHeightInput.value = newHeight;
 
     // Re-create the board visuals to match the puzzle's size
     createBoard();
@@ -734,24 +731,21 @@ function init() {
 
     PIECES = { ...window.HEROES, ...window.MONSTERS };
 
-    boardWidthInput = document.getElementById('board-width-input');
-    boardHeightInput = document.getElementById('board-height-input');
+    levelCodeInput = document.getElementById('level-code-input');
     applySizeButton = document.getElementById('apply-size-button');
 
     applySizeButton.addEventListener('click', () => {
-        const newWidth = parseInt(boardWidthInput.value);
-        const newHeight = parseInt(boardHeightInput.value);
-
-        if (newWidth > 0 && newHeight > 0) {
-            window.BOARD_WIDTH = newWidth;
-            window.BOARD_HEIGHT = newHeight;
-            // Create a default map for the new size
-            gameState.mapConfig = window.createDefaultMap(newWidth, newHeight);
-            createBoard();
-            // We can't setup a puzzle because the pieces are hardcoded.
-            // So we just create an empty board.
-            gameState.board = Array(window.BOARD_HEIGHT).fill(null).map(() => Array(window.BOARD_WIDTH).fill(null));
-            renderBoard();
+        const code = levelCodeInput.value.trim().toUpperCase();
+        if (code && window.LEVEL_CODES && typeof window.LEVEL_CODES[code] !== 'undefined') {
+            const levelIndex = window.LEVEL_CODES[code];
+            if (levelIndex >= 0 && levelIndex < PUZZLES.length) {
+                setupPuzzle(levelIndex);
+                levelCodeInput.value = ''; // clear input after success
+            } else {
+                alert('Invalid level code!');
+            }
+        } else {
+            alert('Invalid level code!');
         }
     });
 
