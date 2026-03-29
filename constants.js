@@ -32,6 +32,8 @@ const LEVEL_CODES = {
     "TINYTRAP": 3
 };
 
+const TILE_IMAGES = {};
+
 // Add this
 const MoveType = {
     MOVE: 'move',
@@ -40,3 +42,4 @@ const MoveType = {
 
 window.MoveType = MoveType;
 window.LEVEL_CODES = LEVEL_CODES;
+window.TILE_IMAGES = TILE_IMAGES;

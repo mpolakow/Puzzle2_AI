@@ -333,6 +333,10 @@ function createBoard() {
             square.classList.add('type-' + tileConfig.type);
             square.classList.add('status-' + tileConfig.status);
 
+            if (window.TILE_IMAGES && window.TILE_IMAGES[tileConfig.type]) {
+                square.style.setProperty('--tile-image', `url(${window.TILE_IMAGES[tileConfig.type]})`);
+            }
+
             square.dataset.row = row;
             square.dataset.col = col;
 
@@ -608,7 +612,14 @@ function renderBoard() {
             if (piece) {
                 const pieceEl = document.createElement('div');
                 pieceEl.classList.add('piece');
-                pieceEl.textContent = piece.icon;
+                if (piece.image) {
+                    const imgEl = document.createElement('img');
+                    imgEl.src = piece.image;
+                    imgEl.alt = piece.name || 'piece';
+                    pieceEl.appendChild(imgEl);
+                } else {
+                    pieceEl.textContent = piece.icon;
+                }
                 squareEl.appendChild(pieceEl);
             }
         }

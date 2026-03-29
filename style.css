@@ -45,6 +45,9 @@ body {
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     z-index: 0;
     transition: all 0.2s ease-in-out;
+    background-image: var(--tile-image);
+    background-size: cover;
+    background-position: center;
 }
 .light::before { background-color: #f0d9b5; }
 .dark::before { background-color: #b58863; }
@@ -53,6 +56,11 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); /* Center the piece perfectly */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     font-size: clamp(2rem, 6vw, 3.5rem);
     cursor: pointer;
     text-shadow: 0 2px 4px rgba(0,0,0,0.4);
@@ -62,6 +70,12 @@ body {
 }
 .square:hover .piece {
     transform: translate(-50%, -50%) scale(1.1);
+}
+.piece img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 .selected::before {
     background-color: #6a9c89 !important;
