@@ -37,55 +37,208 @@ function createDefaultMap(width, height) {
         }
         tiles.push(row);
     }
-    return { width, height, tiles };
+    return { width, height, tiles, units: Array(height).fill(null).map(() => Array(width).fill('XY')) };
 }
 
+const TILE_MAP = {
+    'W': TILE_TYPES.WATER,
+    'P': TILE_TYPES.PLAIN,
+    'F': TILE_TYPES.FOREST
+};
+
+const LEVEL_MAP = {
+    'G': GROUND_LEVELS.GROUND,
+    'U': GROUND_LEVELS.ABOVE_GROUND,
+    'D': GROUND_LEVELS.BELOW_GROUND
+};
+
+const STATUS_MAP = {
+    'N': TILE_STATUSES.NORMAL,
+    'M': TILE_STATUSES.MAGICAL,
+    'C': TILE_STATUSES.CURSED
+};
+
+function createMapFromArrays(tilesArr, levelArr, statusArr, unitsArr) {
+    const height = tilesArr.length;
+    const width = height > 0 ? tilesArr[0].length : 0;
+
+    const tiles = [];
+    for (let r = 0; r < height; r++) {
+        const row = [];
+        for (let c = 0; c < width; c++) {
+            row.push({
+                type: TILE_MAP[tilesArr[r][c]],
+                level: LEVEL_MAP[levelArr[r][c]],
+                status: STATUS_MAP[statusArr[r][c]]
+            });
+        }
+        tiles.push(row);
+    }
+
+    return { width, height, tiles, units: unitsArr };
+}
 
 // Map definitions
-MAPS['knights_charge'] = {
-    width: 8,
-    height: 8,
-    tiles: Array(8).fill(null).map((_, r) => Array(8).fill(null).map((_, c) => {
-        if (r === 3 && c === 3) return { level: GROUND_LEVELS.ABOVE_GROUND, type: TILE_TYPES.FOREST, status: TILE_STATUSES.NORMAL };
-        if (r === 4 && c === 4) return { level: GROUND_LEVELS.BELOW_GROUND, type: TILE_TYPES.WATER, status: TILE_STATUSES.MAGICAL };
-        if (r === 5 && c === 5) return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.PLAIN, status: TILE_STATUSES.CURSED };
-        if (c % 2 === 0) return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.FOREST, status: TILE_STATUSES.NORMAL };
-        if (r % 3 === 0) return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.WATER, status: TILE_STATUSES.NORMAL };
-        return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.PLAIN, status: TILE_STATUSES.NORMAL };
-    }))
-};
 
-MAPS['archers_perch'] = {
-    width: 8,
-    height: 8,
-    tiles: Array(8).fill(null).map((_, r) => Array(8).fill(null).map((_, c) => {
-        if (r < 2) return { level: GROUND_LEVELS.ABOVE_GROUND, type: TILE_TYPES.FOREST, status: TILE_STATUSES.NORMAL };
-        if (r > 5) return { level: GROUND_LEVELS.BELOW_GROUND, type: TILE_TYPES.WATER, status: TILE_STATUSES.NORMAL };
-        return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.PLAIN, status: TILE_STATUSES.NORMAL };
-    }))
-};
+MAPS['knights_charge'] = createMapFromArrays(
+    [
+        ['F', 'W', 'F', 'W', 'F', 'W', 'F', 'W'],
+        ['F', 'P', 'F', 'P', 'F', 'P', 'F', 'P'],
+        ['F', 'P', 'F', 'P', 'F', 'P', 'F', 'P'],
+        ['F', 'W', 'F', 'F', 'F', 'W', 'F', 'W'],
+        ['F', 'P', 'F', 'P', 'W', 'P', 'F', 'P'],
+        ['F', 'P', 'F', 'P', 'F', 'P', 'F', 'P'],
+        ['F', 'W', 'F', 'W', 'F', 'W', 'F', 'W'],
+        ['F', 'P', 'F', 'P', 'F', 'P', 'F', 'P']
+    ],
+    [
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'U', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'D', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G']
+    ],
+    [
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'M', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'C', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N']
+    ],
+    [
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'MG', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'HK', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY']
+    ]
+);
 
-MAPS['warriors_stand'] = {
-    width: 8,
-    height: 8,
-    tiles: Array(8).fill(null).map((_, r) => Array(8).fill(null).map((_, c) => {
-        // Center arena
-        if (r >= 2 && r <= 5 && c >= 2 && c <= 5) {
-             return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.PLAIN, status: TILE_STATUSES.NORMAL };
-        }
-        // Surrounded by cursed water
-        return { level: GROUND_LEVELS.BELOW_GROUND, type: TILE_TYPES.WATER, status: TILE_STATUSES.CURSED };
-    }))
-};
+MAPS['archers_perch'] = createMapFromArrays(
+    [
+        ['F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'],
+        ['F', 'F', 'F', 'F', 'F', 'F', 'F', 'F'],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
+    ],
+    [
+        ['U', 'U', 'U', 'U', 'U', 'U', 'U', 'U'],
+        ['U', 'U', 'U', 'U', 'U', 'U', 'U', 'U'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G', 'G', 'G', 'G'],
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D'],
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D']
+    ],
+    [
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N', 'N', 'N', 'N']
+    ],
+    [
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'MR', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'MO', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['HA', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY']
+    ]
+);
 
-MAPS['tiny_trap'] = {
-    width: 5,
-    height: 5,
-    tiles: Array(5).fill(null).map((_, r) => Array(5).fill(null).map((_, c) => {
-        if (r === 2 && c === 2) return { level: GROUND_LEVELS.BELOW_GROUND, type: TILE_TYPES.PLAIN, status: TILE_STATUSES.MAGICAL };
-        return { level: GROUND_LEVELS.GROUND, type: TILE_TYPES.FOREST, status: TILE_STATUSES.NORMAL };
-    }))
-};
+MAPS['warriors_stand'] = createMapFromArrays(
+    [
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+        ['W', 'W', 'P', 'P', 'P', 'P', 'W', 'W'],
+        ['W', 'W', 'P', 'P', 'P', 'P', 'W', 'W'],
+        ['W', 'W', 'P', 'P', 'P', 'P', 'W', 'W'],
+        ['W', 'W', 'P', 'P', 'P', 'P', 'W', 'W'],
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W'],
+        ['W', 'W', 'W', 'W', 'W', 'W', 'W', 'W']
+    ],
+    [
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D'],
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D'],
+        ['D', 'D', 'G', 'G', 'G', 'G', 'D', 'D'],
+        ['D', 'D', 'G', 'G', 'G', 'G', 'D', 'D'],
+        ['D', 'D', 'G', 'G', 'G', 'G', 'D', 'D'],
+        ['D', 'D', 'G', 'G', 'G', 'G', 'D', 'D'],
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D'],
+        ['D', 'D', 'D', 'D', 'D', 'D', 'D', 'D']
+    ],
+    [
+        ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'],
+        ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'],
+        ['C', 'C', 'N', 'N', 'N', 'N', 'C', 'C'],
+        ['C', 'C', 'N', 'N', 'N', 'N', 'C', 'C'],
+        ['C', 'C', 'N', 'N', 'N', 'N', 'C', 'C'],
+        ['C', 'C', 'N', 'N', 'N', 'N', 'C', 'C'],
+        ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C'],
+        ['C', 'C', 'C', 'C', 'C', 'C', 'C', 'C']
+    ],
+    [
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'MR', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'MG', 'XY', 'XY', 'XY', 'MG', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'HW', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY', 'XY']
+    ]
+);
+
+MAPS['tiny_trap'] = createMapFromArrays(
+    [
+        ['F', 'F', 'F', 'F', 'F'],
+        ['F', 'F', 'F', 'F', 'F'],
+        ['F', 'F', 'P', 'F', 'F'],
+        ['F', 'F', 'F', 'F', 'F'],
+        ['F', 'F', 'F', 'F', 'F']
+    ],
+    [
+        ['G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'D', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G'],
+        ['G', 'G', 'G', 'G', 'G']
+    ],
+    [
+        ['N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'M', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N'],
+        ['N', 'N', 'N', 'N', 'N']
+    ],
+    [
+        ['XY', 'XY', 'MG', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'XY', 'XY', 'XY'],
+        ['XY', 'XY', 'HW', 'XY', 'XY']
+    ]
+);
 
 window.MAPS = MAPS;
 window.createDefaultMap = createDefaultMap;
