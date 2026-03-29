@@ -17,6 +17,7 @@ let PIECES = {};
 const PUZZLES = [
     {
         name: "Knight's Charge",
+        map: "knights_charge",
         objective: "Capture the Goblin.",
         width: 8,
         height: 8,
@@ -28,6 +29,7 @@ const PUZZLES = [
     },
     {
         name: "Archer's Perch",
+        map: "archers_perch",
         objective: "Eliminate the Orc and Ogre.",
         width: 8,
         height: 8,
@@ -40,6 +42,7 @@ const PUZZLES = [
     },
     {
         name: "Warrior's Stand",
+        map: "warriors_stand",
         objective: "Defeat the mighty Ogre.",
         width: 8,
         height: 8,
@@ -53,6 +56,7 @@ const PUZZLES = [
     },
     {
         name: "Goblin's Tiny Trap",
+        map: "tiny_trap",
         objective: "Defeat the Goblin in the small room.",
         width: 5,
         height: 5,
@@ -71,7 +75,8 @@ let gameState = {
     validAttackMoves: [], // Add this
     movesLeft: 0,
     currentPuzzleIndex: 0,
-    isGameOver: false
+    isGameOver: false,
+    mapConfig: null
 };
 
 // --- Piece Movement Logic ---
@@ -298,6 +303,10 @@ function createBoard() {
     boardContainer.innerHTML = '';
     // Use flex column for hex board, not grid
     boardContainer.style.gridTemplateColumns = '';
+
+    // Get the current map configuration
+    const currentMap = gameState.mapConfig || window.createDefaultMap(window.BOARD_WIDTH, window.BOARD_HEIGHT);
+
     for (let row = 0; row < window.BOARD_HEIGHT; row++) {
         const rowEl = document.createElement('div');
         rowEl.classList.add('row');
@@ -308,8 +317,31 @@ function createBoard() {
             const square = document.createElement('div');
             // Can use same light/dark logic, or simplify for hex map
             square.classList.add('square', (row + col) % 2 === 0 ? 'light' : 'dark');
+
+            // Apply tile properties from map
+            let tileConfig = {
+                level: window.GROUND_LEVELS.GROUND,
+                type: window.TILE_TYPES.PLAIN,
+                status: window.TILE_STATUSES.NORMAL
+            };
+
+            if (currentMap && currentMap.tiles && currentMap.tiles[row] && currentMap.tiles[row][col]) {
+                tileConfig = currentMap.tiles[row][col];
+            }
+
+            // Add classes based on properties
+            square.classList.add('level-' + tileConfig.level);
+            square.classList.add('type-' + tileConfig.type);
+            square.classList.add('status-' + tileConfig.status);
+
             square.dataset.row = row;
             square.dataset.col = col;
+
+            // Save properties to dataset for potential later use
+            square.dataset.level = tileConfig.level;
+            square.dataset.type = tileConfig.type;
+            square.dataset.status = tileConfig.status;
+
             // The event listener is on the square, which is crucial
             square.addEventListener('click', onSquareClick);
             rowEl.appendChild(square);
@@ -323,9 +355,16 @@ function setupPuzzle(puzzleIndex) {
     gameState.currentPuzzleIndex = puzzleIndex;
     const puzzle = PUZZLES[puzzleIndex];
 
+    // Load map configuration
+    if (puzzle.map && window.MAPS[puzzle.map]) {
+        gameState.mapConfig = window.MAPS[puzzle.map];
+    } else {
+        gameState.mapConfig = window.createDefaultMap(puzzle.width || 8, puzzle.height || 8);
+    }
+
     // Use the puzzle's defined size, or default to 8x8.
-    const newWidth = puzzle.width || 8;
-    const newHeight = puzzle.height || 8;
+    const newWidth = gameState.mapConfig.width || puzzle.width || 8;
+    const newHeight = gameState.mapConfig.height || puzzle.height || 8;
 
     window.BOARD_WIDTH = newWidth;
     window.BOARD_HEIGHT = newHeight;
@@ -679,6 +718,8 @@ function init() {
         if (newWidth > 0 && newHeight > 0) {
             window.BOARD_WIDTH = newWidth;
             window.BOARD_HEIGHT = newHeight;
+            // Create a default map for the new size
+            gameState.mapConfig = window.createDefaultMap(newWidth, newHeight);
             createBoard();
             // We can't setup a puzzle because the pieces are hardcoded.
             // So we just create an empty board.

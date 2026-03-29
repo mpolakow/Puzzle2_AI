@@ -20,21 +20,31 @@ body {
 }
 .row {
     display: flex;
-    margin-bottom: -16px; /* Adjust overlap for 64px height hexes */
+    margin-bottom: -17.32px;
 }
 .row.odd {
-    margin-left: 29px; /* Half width (58px / 2) */
+    margin-left: 30px;
 }
 .square {
-    position: relative; /* Make square a positioning context */
+    position: relative;
     transition: all 0.2s ease-in-out;
-    width: 58px;
-    height: 67px; /* 58 * 2 / sqrt(3) ~= 67px */
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    margin: 0 1px; /* Small gap between hexes */
+    width: 60.5px; /* Slightly wider to cover subpixel gaps */
+    height: 69.8px; /* Slightly taller */
+    margin: 0 -0.25px; /* Tiny horizontal overlap to fix subpixel gaps */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.light { background-color: #f0d9b5; }
-.dark { background-color: #b58863; }
+.square::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    z-index: 0;
+    transition: all 0.2s ease-in-out;
+}
+.light::before { background-color: #f0d9b5; }
+.dark::before { background-color: #b58863; }
 .piece {
     position: absolute; /* Position piece relative to the square */
     top: 50%;
@@ -50,7 +60,7 @@ body {
 .square:hover .piece {
     transform: translate(-50%, -50%) scale(1.1);
 }
-.selected {
+.selected::before {
     background-color: #6a9c89 !important;
     box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
 }
@@ -83,4 +93,59 @@ body {
 
 .modal-bg {
     background-color: rgba(0,0,0,0.7);
+}
+
+/* Tile Types */
+.type-forest::before,
+.square.light.type-forest::before,
+.square.dark.type-forest::before {
+    background-color: #2e7d32;
+}
+.type-plain {
+    /* Uses default .light / .dark colors unless overridden */
+}
+.type-water::before,
+.square.light.type-water::before,
+.square.dark.type-water::before {
+    background-color: #1976d2;
+}
+
+/* Ground Levels */
+.level-above_ground {
+    transform: translateY(-5px);
+    filter: drop-shadow(0 5px 3px rgba(0,0,0,0.8));
+    z-index: 1;
+}
+.level-ground {
+    /* Default level */
+}
+.level-below_ground {
+    transform: translateY(5px);
+}
+.level-below_ground::before {
+    box-shadow: inset 0 5px 10px rgba(0,0,0,0.5);
+}
+
+/* Tile Statuses */
+.status-magical::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(156,39,176,0.3) 0%, rgba(156,39,176,0) 70%);
+    pointer-events: none;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.status-cursed::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(183,28,28,0.3) 0%, rgba(183,28,28,0) 70%);
+    pointer-events: none;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
