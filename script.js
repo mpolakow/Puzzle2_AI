@@ -376,14 +376,41 @@ function setupPuzzle(puzzleIndex) {
 
     // Setup board state
     gameState.board = Array(window.BOARD_HEIGHT).fill(null).map(() => Array(window.BOARD_WIDTH).fill(null));
-    puzzle.layout.forEach(p => {
-        const [row, col] = p.pos;
-        if (isValidSquare(row, col)) {
-            gameState.board[row][col] = { ...PIECES[p.piece], name: p.piece };
-        } else {
-            console.warn(`Piece ${p.piece} at [${row},${col}] is out of bounds for an 8x8 board and was not placed.`);
+
+    // Map units from mapConfig
+    if (gameState.mapConfig && gameState.mapConfig.units) {
+        const UNIT_MAP = {
+            'HK': 'knight',
+            'HA': 'archer',
+            'HW': 'warrior',
+            'MG': 'goblin',
+            'MO': 'orc',
+            'MR': 'ogre'
+        };
+        for (let r = 0; r < window.BOARD_HEIGHT; r++) {
+            for (let c = 0; c < window.BOARD_WIDTH; c++) {
+                if (gameState.mapConfig.units[r] && gameState.mapConfig.units[r][c] && gameState.mapConfig.units[r][c] !== 'XY') {
+                    const unitCode = gameState.mapConfig.units[r][c];
+                    const pieceName = UNIT_MAP[unitCode];
+                    if (pieceName && PIECES[pieceName]) {
+                        gameState.board[r][c] = { ...PIECES[pieceName], name: pieceName };
+                    } else {
+                        console.warn(`Unknown unit code ${unitCode} at [${r},${c}]`);
+                    }
+                }
+            }
         }
-    });
+    } else {
+        // Fallback to layout if map doesn't define units
+        puzzle.layout.forEach(p => {
+            const [row, col] = p.pos;
+            if (isValidSquare(row, col)) {
+                gameState.board[row][col] = { ...PIECES[p.piece], name: p.piece };
+            } else {
+                console.warn(`Piece ${p.piece} at [${row},${col}] is out of bounds for an 8x8 board and was not placed.`);
+            }
+        });
+    }
 
     // Setup game state
     gameState.movesLeft = puzzle.moves;
