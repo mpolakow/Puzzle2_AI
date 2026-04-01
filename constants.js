@@ -1,45 +1,48 @@
-window.Attack_Type = {
+const Attack_Type = {
     MELEE: 'melee',
     RANGED: 'ranged',
     MAGIC: 'magic'
 };
 
-window.Armor_Type = {
+const Armor_Type = {
     NONE: 'none',
     LIGHT: 'light',
     MEDIUM: 'medium',
     HARD: 'hard'
 };
 
-window.PIECE_TYPES = {
+const PIECE_TYPES = {
     HERO: 'hero',
     MONSTER: 'monster'
 };
 
-window.BOARD_WIDTH = 8;
-window.BOARD_HEIGHT = 8;
+const BOARD_WIDTH = 8;
+const BOARD_HEIGHT = 8;
 
-const Attack_Type = window.Attack_Type;
-const Armor_Type = window.Armor_Type;
-const PIECE_TYPES = window.PIECE_TYPES;
-const BOARD_WIDTH = window.BOARD_WIDTH;
-const BOARD_HEIGHT = window.BOARD_HEIGHT;
+window.Attack_Type = Attack_Type;
+window.Armor_Type = Armor_Type;
+window.PIECE_TYPES = PIECE_TYPES;
+window.BOARD_WIDTH = BOARD_WIDTH;
+window.BOARD_HEIGHT = BOARD_HEIGHT;
 
-window.LEVEL_CODES = {
+const LEVEL_CODES = {
     "KNIGHTMARE": 0,
     "ARCHERPATH": 1,
     "WARRIORWAY": 2,
     "TINYTRAP": 3
 };
 
-window.TILE_IMAGES = window.TILE_IMAGES || {};
+const TILE_IMAGES = {};
 
 // Add this
-window.MoveType = {
+const MoveType = {
     MOVE: 'move',
     ATTACK: 'attack'
 };
 
-const LEVEL_CODES = window.LEVEL_CODES;
-const TILE_IMAGES = window.TILE_IMAGES;
-const MoveType = window.MoveType;
+window.MoveType = MoveType;
+window.LEVEL_CODES = LEVEL_CODES;
+window.TILE_IMAGES = TILE_IMAGES;
+window.TILE_IMAGES['forest'] = 'Sprites/Forestv2.png';
+window.TILE_IMAGES['water'] = 'Sprites/Water.png';
+window.TILE_IMAGES['plain'] = 'Sprites/Plainsv2.png';
