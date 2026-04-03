@@ -98,32 +98,25 @@ function cubeDistance(a, b) {
 }
 
 function isValidTileForPiece(row, col, pieceDefinition) {
-    if (!gameState.mapConfig || !gameState.mapConfig.tiles[row] || !gameState.mapConfig.tiles[row][col]) {
-        // Fallback if no map config, treat as plain
-        if (pieceDefinition.Movement_Type === window.Movement_Type.WALKING) return true;
-        if (pieceDefinition.Movement_Type === window.Movement_Type.SWIMMING) return false;
-        if (pieceDefinition.Movement_Type === window.Movement_Type.CLIMBING) return false;
-        if (pieceDefinition.Movement_Type === window.Movement_Type.FLYING) return false;
-        return true;
-    }
-
-    const tileType = gameState.mapConfig.tiles[row][col].type;
+    const tileType = (gameState.mapConfig && gameState.mapConfig.tiles[row] && gameState.mapConfig.tiles[row][col])
+        ? gameState.mapConfig.tiles[row][col].type
+        : window.TILE_TYPES.PLAIN; // Fallback to plain if no map config
 
     // EMPTY tile is unpassable for everyone
     if (tileType === window.TILE_TYPES.EMPTY) return false;
 
-    switch (pieceDefinition.Movement_Type) {
-        case window.Movement_Type.WALKING:
-            return tileType === window.TILE_TYPES.PLAIN || tileType === window.TILE_TYPES.FOREST;
-        case window.Movement_Type.SWIMMING:
-            return tileType === window.TILE_TYPES.WATER;
-        case window.Movement_Type.CLIMBING:
-            return tileType === window.TILE_TYPES.MOUNTAIN;
-        case window.Movement_Type.FLYING:
-            return tileType === window.TILE_TYPES.AIR;
-        default:
-            return true; // Default allow if unknown
+    // Check if any of the piece's movement types can pass this tile
+    const movementTypes = pieceDefinition.Movement_Types || [];
+
+    for (const mType of movementTypes) {
+        if (mType === window.Movement_Type.WALKING && (tileType === window.TILE_TYPES.PLAIN || tileType === window.TILE_TYPES.FOREST)) return true;
+        if (mType === window.Movement_Type.SWIMMING && tileType === window.TILE_TYPES.WATER) return true;
+        if (mType === window.Movement_Type.CLIMBING && tileType === window.TILE_TYPES.MOUNTAIN) return true;
+        if (mType === window.Movement_Type.FLYING && tileType === window.TILE_TYPES.AIR) return true;
     }
+
+    // If none match, or if there were no specific types given, return false (or true if you want unknown types to pass, but false is safer)
+    return movementTypes.length === 0; // Allow unknown pieces to move everywhere for backward compatibility
 }
 
 function getKnightMoves(row, col, board, pieceDefinition) {
