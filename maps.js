@@ -7,7 +7,10 @@ const GROUND_LEVELS = {
 const TILE_TYPES = {
     FOREST: 'forest',
     PLAIN: 'plain',
-    WATER: 'water'
+    WATER: 'water',
+    MOUNTAIN: 'mountain',
+    AIR: 'air',
+    EMPTY: 'empty'
 };
 
 const TILE_STATUSES = {
@@ -43,7 +46,10 @@ function createDefaultMap(width, height) {
 const TILE_MAP = {
     'W': TILE_TYPES.WATER,
     'P': TILE_TYPES.PLAIN,
-    'F': TILE_TYPES.FOREST
+    'F': TILE_TYPES.FOREST,
+    'M': TILE_TYPES.MOUNTAIN,
+    'A': TILE_TYPES.AIR,
+    'E': TILE_TYPES.EMPTY
 };
 
 const LEVEL_MAP = {

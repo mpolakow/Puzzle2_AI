@@ -97,7 +97,29 @@ function cubeDistance(a, b) {
     return (Math.abs(a.q - b.q) + Math.abs(a.r - b.r) + Math.abs(a.s - b.s)) / 2;
 }
 
-function getKnightMoves(row, col, board) {
+function isValidTileForPiece(row, col, pieceDefinition) {
+    const tileType = (gameState.mapConfig && gameState.mapConfig.tiles[row] && gameState.mapConfig.tiles[row][col])
+        ? gameState.mapConfig.tiles[row][col].type
+        : window.TILE_TYPES.PLAIN; // Fallback to plain if no map config
+
+    // EMPTY tile is unpassable for everyone
+    if (tileType === window.TILE_TYPES.EMPTY) return false;
+
+    // Check if any of the piece's movement types can pass this tile
+    const movementTypes = pieceDefinition.Movement_Types || [];
+
+    for (const mType of movementTypes) {
+        if (mType === window.Movement_Type.WALKING && (tileType === window.TILE_TYPES.PLAIN || tileType === window.TILE_TYPES.FOREST)) return true;
+        if (mType === window.Movement_Type.SWIMMING && tileType === window.TILE_TYPES.WATER) return true;
+        if (mType === window.Movement_Type.CLIMBING && tileType === window.TILE_TYPES.MOUNTAIN) return true;
+        if (mType === window.Movement_Type.FLYING && tileType === window.TILE_TYPES.AIR) return true;
+    }
+
+    // If none match, or if there were no specific types given, return false (or true if you want unknown types to pass, but false is safer)
+    return movementTypes.length === 0; // Allow unknown pieces to move everywhere for backward compatibility
+}
+
+function getKnightMoves(row, col, board, pieceDefinition) {
     // Knight move on hex grid: 2 steps in one direction, 1 in another (or 3 steps)
     // A standard hex knight move is jumping to the 12 hexes that are at distance 2,
     // but not in a straight line. Or jumping to next-next-neighbor.
@@ -123,7 +145,7 @@ function getKnightMoves(row, col, board) {
         const newRow = offset.row;
         const newCol = offset.col;
 
-        if (isValidSquare(newRow, newCol)) {
+        if (isValidSquare(newRow, newCol) && isValidTileForPiece(newRow, newCol, pieceDefinition)) {
             const targetSquare = board[newRow][newCol];
             if (!targetSquare || targetSquare.type !== pieceType) {
                  moves.push([newRow, newCol]);
@@ -147,13 +169,13 @@ function getHexNeighbors(row, col) {
     return dirs.map(([dr, dc]) => [row + dr, col + dc]);
 }
 
-function getKingMoves(row, col, board) {
+function getKingMoves(row, col, board, pieceDefinition) {
     const isOdd = row % 2 !== 0;
     const moves = isOdd ? hexDirections.odd : hexDirections.even;
-    return getValidMovesFromOffsets(row, col, moves, board);
+    return getValidMovesFromOffsets(row, col, moves, board, pieceDefinition);
 }
 
-function getPawnMoves(row, col, board) {
+function getPawnMoves(row, col, board, pieceDefinition) {
     // Goblins (pawns) move one step forward. In our hex map, "forward" (towards row 0)
     // can be Top-Left or Top-Right.
     const isOdd = row % 2 !== 0;
@@ -165,7 +187,7 @@ function getPawnMoves(row, col, board) {
     for (const [dr, dc] of moveDirs) {
         const newRow = row + dr;
         const newCol = col + dc;
-        if(isValidSquare(newRow, newCol) && !board[newRow][newCol]) {
+        if(isValidSquare(newRow, newCol) && isValidTileForPiece(newRow, newCol, pieceDefinition) && !board[newRow][newCol]) {
             validMoves.push([newRow, newCol]);
         }
     }
@@ -173,14 +195,14 @@ function getPawnMoves(row, col, board) {
     for (const [dr, dc] of moveDirs) {
         const newRow = row + dr;
         const newCol = col + dc;
-        if(isValidSquare(newRow, newCol) && board[newRow][newCol] && board[newRow][newCol].type === PIECE_TYPES.HERO) {
+        if(isValidSquare(newRow, newCol) && isValidTileForPiece(newRow, newCol, pieceDefinition) && board[newRow][newCol] && board[newRow][newCol].type === PIECE_TYPES.HERO) {
             validMoves.push([newRow, newCol]);
         }
     }
     return validMoves;
 }
 
-function getSlidingMoves(row, col, isBishop, board, range) {
+function getSlidingMoves(row, col, isBishop, board, range, pieceDefinition) {
     let moves = [];
     const pieceType = board[row][col].type;
 
@@ -204,6 +226,8 @@ function getSlidingMoves(row, col, isBishop, board, range) {
                 c += dc;
 
                 if (!isValidSquare(r, c)) break;
+
+                if (!isValidTileForPiece(r, c, pieceDefinition)) break;
 
                 const targetSquare = board[r][c];
                 if (targetSquare) {
@@ -250,6 +274,8 @@ function getSlidingMoves(row, col, isBishop, board, range) {
 
                 if (!isValidSquare(r_off, c_off)) break;
 
+                if (!isValidTileForPiece(r_off, c_off, pieceDefinition)) break;
+
                 const targetSquare = board[r_off][c_off];
                 if (targetSquare) {
                     if (targetSquare.type !== pieceType) {
@@ -266,14 +292,14 @@ function getSlidingMoves(row, col, isBishop, board, range) {
 }
 
 function getBishopMoves(row, col, board, piece) {
-    return getSlidingMoves(row, col, true, board, piece.Move);
+    return getSlidingMoves(row, col, true, board, piece.Move, piece);
 }
 
 function getRookMoves(row, col, board, piece) {
-    return getSlidingMoves(row, col, false, board, piece.Move);
+    return getSlidingMoves(row, col, false, board, piece.Move, piece);
 }
 
-function getValidMovesFromOffsets(row, col, offsets, board) {
+function getValidMovesFromOffsets(row, col, offsets, board, pieceDefinition) {
     const moves = [];
     const pieceType = board[row][col].type;
 
@@ -281,7 +307,7 @@ function getValidMovesFromOffsets(row, col, offsets, board) {
         const newRow = row + dr;
         const newCol = col + dc;
 
-        if (isValidSquare(newRow, newCol)) {
+        if (isValidSquare(newRow, newCol) && isValidTileForPiece(newRow, newCol, pieceDefinition)) {
             const targetSquare = board[newRow][newCol];
             if (!targetSquare || targetSquare.type !== pieceType) {
                  moves.push([newRow, newCol]);
